@@ -1,0 +1,28 @@
+version: "3.0"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODEJS_VERSION: ${NODE_JS_VERSION:-node:12.18.4-stretch-slim}
+        NGINX_VERSION: ${NGINX_VERSION:-nginx:1.19}
+    image: web
+    container_name: ${WEB_CONTAINER_NAME:-frontend}
+    hostname: ${WEB_HOST_NAME:-frontend}
+    restart: ${RESTART_CONTAINER_WEB:-always}
+    ports:
+      - ${NGINX_PORT:-80}:80
+    env_file:
+      - .env
+    networks: ['water']
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10M"
+        max-file: "5"
+
+networks:
+  water:
+    driver: bridge

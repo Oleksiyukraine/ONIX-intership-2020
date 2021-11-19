@@ -1,0 +1,26 @@
+stages:
+  - build
+
+services:
+  - docker:19.03.0-dind
+
+project-image-build-aws:
+  tags:
+  - docker
+  stage: build
+  only:
+  - master
+  image: docker:19.03.0-dind
+  before_script:
+  - command -v ssh-agent || ( apk update && apk add openssh-client )
+  - mkdir -p ~/.ssh
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    # - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add -
+  - chmod 700 ~/.ssh/id_rsa
+  - eval "$(ssh-agent -s)"
+  - ssh-add ~/.ssh/id_rsa
+  - ssh-keyscan -H 'gitlab.com' >> ~/.ssh/known_hosts
+  script:
+  - ssh -o StrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null ${AWS_USER}@${AWS_INSTANCE} "set -e; cd /opt/water/web; git pull; docker-compose up -d --build"
+
+
